@@ -8,11 +8,14 @@ tag_error_tag = 1
 tag_socket_closed = 2
 tag_no_msg = 3
 tag_yet_to_start = 4
+tag_check_connection = 5
 tag_usernames = 10
 tag_prior_user = 11
 tag_index = 12
+tag_accepted = 13
 tag_notification = 20
 tag_start = 21
+tag_dealer = 22
 tag_give_cards = 30
 tag_draw_pile = 31
 tag_take_cards = 32
@@ -75,6 +78,7 @@ def receiving(sockets):
     if msg == 2:
         return tag_no_msg, None, None, None, sock
     if not msg:
+        print("Where are you?")
         sock.close()
         return tag_socket_closed, None, None, None, sock
     tag, value, msg, player = read_message(msg)
