@@ -7,12 +7,9 @@ import create_deck
 import GUI
 
 
-# deck = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Bube", "Dame", "König", "Ass", "qwertzuiopüasdfghjklö", "wie wo was warum?", "Kreuz", "Pik", "Herz", "Karo", "Karlchen", "wirklich beschissener Fluch"]
-# players = 3
 deck, players, piles_size = create_deck.results()
 GUI.par.other_players = players - 1
 GUI.par.set(GUI.par.other_players, 250 // GUI.par.other_players)
-# deck, players = game.choose_game()
 
 players_piles, draw_pile_cards = create_deck.distribute(deck, players)
 
@@ -21,14 +18,9 @@ server.connect(("127.0.0.1", 1338))
 print("Mit Server verbunden")
 com.send_message(server,com.write_message(com.tag_prior_user, "secret_message"))
 com.send_message(server, com.write_message(com.tag_players, str(players)))
-"sent players"
 
 pers_ind = 1
-
 index_big_card = -1
-# GUI.hand = []
-# GUI.hand_objects = []
-# GUI.hand_rectangles = []
 
 draw = []
 msg = None
@@ -38,14 +30,12 @@ card_pos_y = GUI.card_pos_y
 distance = GUI.distance
 
 
-def start_game():
-    print("fcn start_game")
+def give_cards():
     i = 1
     while i <= players:
         for j in players_piles[i-2]:
             com.send_message(server, com.write_message(com.tag_give_cards, j, i))
-        i = i+1
-    # GUI.hand = players_piles[players - 1]
+        i += 1
     for k in draw_pile_cards:
         com.send_message(server, com.write_message(com.tag_draw_pile, k))
 
@@ -70,9 +60,6 @@ def work_sockets(sockets):
             print("fcn work_sockets: received  card:", value)
         elif tag == com.tag_usernames:
             GUI.par.names = com.decode_list(value)
-        elif tag == com.tag_start:
-            print("Starting game")
-            start_game()
         else:
             com.send_message(server, com.write_message(0, "Error client: Tag " + str(tag) + "unknown."))
         if msg is None:
@@ -81,6 +68,7 @@ def work_sockets(sockets):
             tag, value, msg, player = com.read_message(msg)
 
 
+give_cards()
 pygame.init()  # initialize pygame
 fps = 30
 clock = pygame.time.Clock()
@@ -93,11 +81,12 @@ while True:
     GUI.display(draw_pile)
     if name is None and naming.wait_input:
         name = naming.get_input()
-        if name:
+        if name and name != 42:
             print(name)
             com.send_message(server, com.write_message(com.tag_usernames, (str(1) + name)))
     elif name == 42:
         server.close()
+        pygame.quit()
         sys.exit()
 
     x, y = pygame.mouse.get_pos()

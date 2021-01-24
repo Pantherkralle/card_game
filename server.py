@@ -3,6 +3,7 @@ import select
 import socket
 import random
 import com
+import os
 
 message_present = "{} von {} Spieler*innen anwesend."
 message_waiting = "Warte auf Spieler*innen."
@@ -63,12 +64,12 @@ def discard(pile, value, sock):
     pile.append(value)
     players_piles[inpt.index(sock)-1].remove(value)
 
-
 def work_sockets(msg, sock):
     global draw_pile
     global cov_dis
     global open_dis
     global players_piles
+    global cards_given
     tag, value, msg, player = com.read_message(msg)
     while True:
         if tag == com.tag_no_msg:
@@ -88,15 +89,12 @@ def work_sockets(msg, sock):
         elif tag == com.tag_piles_size:
             piles_size = int(value)
         elif tag == com.tag_give_cards:
-            if not cards_given:
-                if players_piles[player-1] is None:
-                    players_piles[player-1] = [value]
-                else:
-                    players_piles[player-1].append(value)
-                com.send_message(inpt[player], com.write_message(com.tag_take_cards, value))
+            if players_piles[player-1] is None:
+                players_piles[player-1] = [value]
             else:
-                for card in players_piles[-1]:
-                    com.send_message(inpt[-1], com.write_message(com.tag_take_cards, card))
+                players_piles[player-1].append(value)
+        elif tag == com.tag_cards_given:
+            cards_given = True
         elif tag == com.tag_draw_pile:
             draw_pile.append(value)
         elif tag == com.tag_open_dis:
@@ -138,6 +136,12 @@ def work_sockets(msg, sock):
             tag, value, msg, player = com.read_message(msg)
 
 
+def end_game():
+    for sock in inpt[1:]:
+        sock.close()
+    quit()
+
+
 def close_connection(sock):
     index = inpt.index(sock)
     players_piles.append(players_piles[index-1])
@@ -146,7 +150,8 @@ def close_connection(sock):
     sock.close()
     send_players(inpt, com.write_message(com.tag_socket_closed, "names[index]"))
     if index == 1:
-        com.send_message(inpt[1], com.write_message(com.tag_dealer, "You"))
+        send_players(inpt, com.write_message(com.tag_end, "Dealer left"))
+        end_game()
     names.pop(index)
     names.append("player " + str(len(names)))
 
@@ -164,7 +169,6 @@ while 1:
                         client, addr = server.accept()
                         if len(inpt) == 1:
                             tag, value, msg, player, sock = com.receiving([client])
-    # ToDo: Wenn Verbindung vor Name Input geschlossen wird, funktioniert es nicht. try - except?
                             if tag == com.tag_prior_user and value == "secret_message":
                                 inpt.append(client)
                                 names.append("player 1")
@@ -173,7 +177,6 @@ while 1:
                                 client.close()
                         else:
                             inpt.append(client)
-                            # com.send_message(client, com.write_message(com.tag_accepted, "Connected"))
                             message = message_present.format((len(inpt) - 1), players)
                             com.send_message(client, com.write_message(com.tag_index, str(inpt.index(client))))
                             send_players(inpt, com.write_message(com.tag_notification, message))
@@ -183,6 +186,14 @@ while 1:
                                 send_players(inpt, com.write_message(com.tag_notification, message_waiting))
                             else:
                                 send_players(inpt, com.write_message(com.tag_start, message_start))
+                                if cards_given:
+                                    for card in players_piles[-1]:
+                                        com.send_message(inpt[-1], com.write_message(com.tag_take_cards, card))
+                                else:
+                                    for index, pile in enumerate(players_piles):
+                                        for card in pile:
+                                            com.send_message(inpt[index+1], com.write_message(com.tag_take_cards, card))
+                                    cards_given = True
                                 # send_players(inpt, com.write_message(com.tag_usernames, com.encode_list(names[1:])))
                 else:
                     buf, s = com.receive_message([s])

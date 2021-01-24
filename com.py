@@ -12,10 +12,10 @@ tag_check_connection = 5
 tag_usernames = 10
 tag_prior_user = 11
 tag_index = 12
-tag_accepted = 13
 tag_notification = 20
 tag_start = 21
-tag_dealer = 22
+tag_end = 22
+tag_cards_given = 23
 tag_give_cards = 30
 tag_draw_pile = 31
 tag_take_cards = 32
@@ -29,6 +29,7 @@ tag_piles_size = 41
 tags_to_all = [tag_notification, tag_start]
 tags_specific_player = [tag_give_cards, tag_draw, tag_open_dis, tag_cov_dis]
 
+timeout = 0.01
 
 def encode_list(list):
     string = ""
@@ -52,7 +53,7 @@ def send_message(sock, message):
     success = False
 
     while not success:
-        inputready, outputready, exceptready = select.select([], [sock], [], 0.5)
+        inputready, outputready, exceptready = select.select([], [sock], [], timeout)
         if sock in outputready:
             sock.sendall(message)
             # print("fcn send_message. sent message:", message)
@@ -86,7 +87,7 @@ def receiving(sockets):
 
 
 def receive_message(sockets):
-    inputready, outputready, exceptready = select.select(sockets, [], [], .0001)
+    inputready, outputready, exceptready = select.select(sockets, [], [], timeout)
     received = b""
     if len(inputready) == 0:
         return 2, 0
@@ -100,7 +101,7 @@ def receive_message(sockets):
                     received = None
                 # print("fcn receive_message. received in total =", received)
                 return received, sock
-            inputready, outputready, exceptready = select.select(sockets, [], [], 0)
+            inputready, outputready, exceptready = select.select(sockets, [], [], timeout)
     return received, sock
 
 

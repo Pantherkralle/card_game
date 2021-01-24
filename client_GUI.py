@@ -15,9 +15,6 @@ fps = 30
 clock = pygame.time.Clock()
 
 index_big_card = - 1
-# GUI.hand = []
-# GUI.hand_objects = []
-# GUI.hand_rectangles = []
 card_pos_y = GUI.card_pos_y
 distance = GUI.distance
 
@@ -26,7 +23,6 @@ draw = []
 msg = None
 name = None
 draw_pile = True
-# names = ["Warte auf weitere Spieler*innen."]
 
 
 def personalize(listed, per_ind):
@@ -37,9 +33,15 @@ def personalize(listed, per_ind):
 
 
 def work_sockets(sockets):
-    tag, value, rest, player, sock = com.receiving(sockets)
+    try:
+        tag, value, rest, player, sock = com.receiving(sockets)
+    except ValueError:
+        pygame.quit()
+        sys.exit()
     while True:
-        if tag == com.tag_no_msg:
+        if tag == com.tag_end:
+            sockets[0].close()
+        elif tag == com.tag_no_msg:
             break
         elif tag == com.tag_open_dis:
             GUI.open_discard_pile.value = value
@@ -52,8 +54,9 @@ def work_sockets(sockets):
             global pers_ind
             pers_ind = int(value)
             # print("Pers_ind:", pers_ind)
-        elif tag == com.tag_yet_to_start:
-            note = GUI.Comment("Verbindung zum Server konnte nicht hergestellt werden, da Spiel noch nicht gestartet.")
+        elif tag in [com.tag_yet_to_start, com.tag_socket_closed]:
+            note = GUI.Comment("Verbindung zum Server konnte nicht hergestellt werden, da Spiel noch nicht gestartet "
+                               "oder bereits alle Spielenden anwesend.")
             note.show()
             pygame.display.update()
             clock.tick(1/5)
@@ -84,20 +87,12 @@ def work_sockets(sockets):
         else:
             tag, value, rest, player = com.read_message(rest)
 
-
-# stuff to be defined later by sent information
-# hand = ["02", "03", "04", "05", "06", "07", "08", "09", "10", "Bube", "Dame", "König", "Ass", "qwertzuiopüasdfghjklö"]
-# draw_pile_cards = ["wie wo was warum?", "Kreuz", "Pik", "Herz", "Karo", "Karlchen", "wirklich beschissener Fluch"]
-
 pile_size = 3
-# pile_size = len(hand)
-# Ende
 
 pygame.mouse.set_visible(1)
 naming = GUI.InputBox(GUI.screen, "Bitte Namen eingeben:")
 
 sock.connect((addr, port))
-
 
 while True:
     work_sockets([sock])
@@ -105,7 +100,7 @@ while True:
     if not name and naming.wait_input and pers_ind:
         # print("Getting name input")
         name = naming.get_input()
-        if name:
+        if name and name != 42:
             # print("Got name input")
             com.send_message(sock, com.write_message(com.tag_usernames, (str(pers_ind) + name)))
     elif name == 42:
@@ -124,18 +119,12 @@ while True:
         hand_area = pygame.Rect((GUI.par.screen_w - hand_w) // 2, card_pos_y, hand_w, GUI.par.empty_card_h)
 
         # examine which card is selected by the cursors' position
-        # print("main loop: hand_area =", hand_area, ", cursor at", x, y)
-        # print("main loop: drag_card =", drag_card)
         if hand_area.collidepoint(x, y) and not GUI.drag_card:
-            # print("main loop: GUI.hand_rectangles:", GUI.hand_rectangles)
             for ind, Rectangle in enumerate(GUI.hand_rectangles):
-                # print("main loop: Rectangle",ind, ":", Rectangle)
                 if Rectangle.collidepoint(x, y):
                     index_big_card = ind
-                    # print("main loop: colliding. index big card:", index_big_card)
                     break
                 else:
-                    # print("main loop: not colliding")
                     index_big_card = -1  # Dürfte keinen Effekt haben
 
     for event in pygame.event.get():
@@ -178,6 +167,6 @@ while True:
         GUI.covered_discard_pile.active = False
         GUI.draw_pile.active = False
 
-    if not naming.wait_input:
-        clock.tick(fps)
+    #if not naming.wait_input:
+    #    clock.tick(fps)
     pygame.display.update()
