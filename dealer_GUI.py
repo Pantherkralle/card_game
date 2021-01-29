@@ -7,11 +7,23 @@ import create_deck
 import GUI
 
 
+#ToDo: Spielmechanik: dealer kann keine Karten ziehen,
+# Stapel aufteilen / auf die Hand nehmen, idealerweise frei auf dem Tisch verschieben (für Stiche nehmen etc.),
+# dann auch Möglichkeit, Stapel anzusehen (oder generell bei offenem Stapel)
+# Information über Handlungen der Mitspielenden (Chatfenster am Rand o.ä. / PopUp-Meldungen)
+# rein GUI: Problem schwarzer Streifen, 'Kreuz' komisch verschoben, Anzahl Karten Spieler auf Stapelrückseite anzeigen
+# kann Spielmenü nicht mit Enter bestätigen
+# ! Was, wenn zu viele Karten gegeben werden sollen?
+# ! IP-Adressen frei eingeben -> Textfeld
+# ! Name
+# ! Doku / Benutzerhandbuch: Motivation / was kann es, technisch: Netzwerknachrichten beschreiben
+
+
 deck, players, piles_size = create_deck.results()
 GUI.par.other_players = players - 1
 GUI.par.set(GUI.par.other_players, 250 // GUI.par.other_players)
 
-players_piles, draw_pile_cards = create_deck.distribute(deck, players)
+players_piles, draw_pile_cards = create_deck.distribute(deck, players, piles_size)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect(("127.0.0.1", 1338))

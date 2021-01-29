@@ -9,6 +9,7 @@ tag_socket_closed = 2
 tag_no_msg = 3
 tag_yet_to_start = 4
 tag_check_connection = 5
+tag_accepted = 6
 tag_usernames = 10
 tag_prior_user = 11
 tag_index = 12
@@ -74,8 +75,8 @@ def write_message(tag, value, player=None):
     return msg
 
 
-def receiving(sockets):
-    msg, sock = receive_message(sockets)
+def receiving(sockets, to=timeout):
+    msg, sock = receive_message(sockets, to)
     if msg == 2:
         return tag_no_msg, None, None, None, sock
     if not msg:
@@ -86,7 +87,7 @@ def receiving(sockets):
     return tag, value, msg, player, sock
 
 
-def receive_message(sockets):
+def receive_message(sockets, to=timeout):
     inputready, outputready, exceptready = select.select(sockets, [], [], timeout)
     received = b""
     if len(inputready) == 0:
@@ -152,10 +153,7 @@ def decode_list(string):
     return string.split("|")
 
 
-def give_cards(inpt, players, players_piles):
-    i = 1
-    while i <= players:
-        s = inpt[i]
-        for c in players_piles[i-1]:
-            send_message(s, write_message(tag_give_cards, c, i))
-        i = i + 1
+def give_cards(socks, players_piles):
+    for ind, sock in enumerate(socks):
+        for c in players_piles[ind]:
+            send_message(sock, write_message(tag_give_cards, c, ind+1))

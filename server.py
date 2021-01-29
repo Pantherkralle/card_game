@@ -105,7 +105,10 @@ def work_sockets(msg, sock):
         elif tag == com.tag_shuffle:
             if value == "open":
                 if len(open_dis) > 0:
-                    draw_pile += random.shuffle(open_dis)
+                    print(type(open_dis), open_dis)
+                    print(type(draw_pile))
+                    random.shuffle(open_dis)
+                    draw_pile += open_dis
                     open_dis = []
                     send_players(inpt, com.write_message(com.tag_empty_dp, str(1)))
             elif value == "cov":
@@ -192,7 +195,7 @@ while 1:
                                 else:
                                     for index, pile in enumerate(players_piles):
                                         for card in pile:
-                                            com.send_message(inpt[index+1], com.write_message(com.tag_take_cards, card))
+                                            com.send_message(inpt[index+1], com.write_message(com.g_cards, card))
                                     cards_given = True
                                 # send_players(inpt, com.write_message(com.tag_usernames, com.encode_list(names[1:])))
                 else:

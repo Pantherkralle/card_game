@@ -12,7 +12,7 @@ class Subwindow:
 
     def show(self):
         # self.pw.pack(fill=BOTH, expand=True)
-        self.pw.grid(column=self.col, row=self.row)
+        self.pw.grid(column=self.col, row=self.row, sticky="W")
 
     def remove(self):
         self.pw.grid_forget()
@@ -56,9 +56,9 @@ class LabelAndInput:
             i -= 1
         while i < num:
             left = self.left_element(i)
-            left.grid(column=0, row=self.row+i)
+            left.grid(column=0, row=self.row+i, sticky="E")
             right = self.right_element()
-            right.grid(column=1, row=self.row+i)
+            right.grid(column=1, row=self.row+i, sticky="E")
             self.left_list.append(left)
             self.right_list.append(right)
             i += 1
@@ -144,12 +144,12 @@ choose_deck.show()
 create_french = Subwindow(row=1)
 
 title_french = Label(create_french.pw, text='Erstelle französisches Blatt')
-title_french.grid(row=0)
+title_french.grid(row=0, sticky="W")
 
 lowest_card = LabelAnd(create_french, 'Niedrigste Karte im Deck', 1)
 lowest_card_var = IntVar(create_french.pw, value=2)
 lowest_card_slide = Scale(create_french.pw, orient=HORIZONTAL, from_=2, to=10, variable=lowest_card_var)
-lowest_card_slide.grid(column=1, row=1)
+lowest_card_slide.grid(column=1, row=1, sticky="W")
 
 number_sets = LabelAndSpinbox(create_french, 'Anzahl der Sätze im Deck', 2)
 
@@ -161,7 +161,7 @@ create_french.show()
 create_own = Subwindow(row=1)
 
 title_own = Label(create_own.pw, text='Erstelle individuelles Deck')
-title_own.grid(row=0)
+title_own.grid(row=0, sticky="W")
 
 colors = Subwindow(row=1, parent=create_own.pw)
 define_colors = Subwindow(row=1, parent=colors.pw)
@@ -306,7 +306,8 @@ root.protocol("WM_DELETE_WINDOW", results.get)
 
 mainloop()
 
-def distribute(draw_pile, players):                                              # Karten mischen und verteilen
+
+def distribute(draw_pile, players, piles_size):                                           # Karten mischen und verteilen
     """
     Shuffles card deck and creates a list of the hand of each player and one of the remaining cards.
 
@@ -330,7 +331,7 @@ def distribute(draw_pile, players):                                             
     i = 0
     piles = [None] * players
     while i <= players - 1:
-        piles[i] = draw_pile[i * results.piles_size: (i + 1) * results.piles_size]
+        piles[i] = draw_pile[i * piles_size: (i + 1) * piles_size]
         i = i + 1
-    draw_pile = draw_pile[players * results.piles_size:]
+    draw_pile = draw_pile[players * piles_size:]
     return piles, draw_pile
