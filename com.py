@@ -10,6 +10,7 @@ tag_no_msg = 3
 tag_yet_to_start = 4
 tag_check_connection = 5
 tag_accepted = 6
+tag_socket_connected = 7
 tag_usernames = 10
 tag_prior_user = 11
 tag_index = 12
@@ -28,7 +29,7 @@ tag_shuffle = 37
 tag_players = 40
 tag_piles_size = 41
 tags_to_all = [tag_notification, tag_start]
-tags_specific_player = [tag_give_cards, tag_draw, tag_open_dis, tag_cov_dis]
+tags_specific_player = [tag_give_cards, tag_draw, tag_open_dis, tag_cov_dis, tag_socket_connected]
 
 timeout = 0.01
 

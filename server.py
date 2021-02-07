@@ -64,6 +64,7 @@ def discard(pile, value, sock):
     pile.append(value)
     players_piles[inpt.index(sock)-1].remove(value)
 
+
 def work_sockets(msg, sock):
     global draw_pile
     global cov_dis
@@ -126,11 +127,6 @@ def work_sockets(msg, sock):
                 draw_pile.pop(0)
             if len(draw_pile) == 0:
                 send_players(inpt, com.write_message(com.tag_empty_dp, str(0)))
-        elif tag == com.tag_usernames:
-            # global names
-            names = name_player(value, sock, names)
-            send_players(inpt, com.write_message(com.tag_usernames, com.encode_list(names[1:])))
-            # return names
         # else:
         #     communication.send_message(sock, communication.write_message(0, "Error client: Tag " + str(tag) + "unknown."))
         if msg is None:
@@ -151,7 +147,7 @@ def close_connection(sock):
     players_piles.pop(index-1)
     inpt.pop(index)
     sock.close()
-    send_players(inpt, com.write_message(com.tag_socket_closed, "names[index]"))
+    send_players(inpt, com.write_message(com.tag_socket_closed, names[index]))
     if index == 1:
         send_players(inpt, com.write_message(com.tag_end, "Dealer left"))
         end_game()
@@ -170,34 +166,33 @@ while 1:
                 if s == server:
                     if len(inpt) <= players:
                         client, addr = server.accept()
-                        if len(inpt) == 1:
-                            tag, value, msg, player, sock = com.receiving([client])
-                            if tag == com.tag_prior_user and value == "secret_message":
-                                inpt.append(client)
-                                names.append("player 1")
-                            else:
-                                com.send_message(client, com.write_message(com.tag_yet_to_start, "Spiel noch nicht gestartet."))
-                                client.close()
-                        else:
+                        tag, value, msg, player, sock = com.receiving([client])
+                        if len(inpt) == 1 and player or len(inpt) > 1 and not player:
                             inpt.append(client)
-                            message = message_present.format((len(inpt) - 1), players)
-                            com.send_message(client, com.write_message(com.tag_index, str(inpt.index(client))))
-                            send_players(inpt, com.write_message(com.tag_notification, message))
-                            send_players(inpt, com.write_message(com.tag_players, str(players)))
-                            send_players(inpt, com.write_message(com.tag_usernames, com.encode_list(names[1:])))
-                            if len(inpt) <= players:
-                                send_players(inpt, com.write_message(com.tag_notification, message_waiting))
+                            names.append(value)
+                            if player:
+                                players = player
+                                players_piles = [None] * players
+                        else:
+                            if player:
+                                com.send_message(client, com.write_message(com.tag_yet_to_start, "Hier ist schon ein "
+                                                 "Dealer. Nimm als Client teil oder such dir nen eigenen Server!"))
                             else:
-                                send_players(inpt, com.write_message(com.tag_start, message_start))
-                                if cards_given:
-                                    for card in players_piles[-1]:
-                                        com.send_message(inpt[-1], com.write_message(com.tag_take_cards, card))
-                                else:
-                                    for index, pile in enumerate(players_piles):
-                                        for card in pile:
-                                            com.send_message(inpt[index+1], com.write_message(com.g_cards, card))
-                                    cards_given = True
-                                # send_players(inpt, com.write_message(com.tag_usernames, com.encode_list(names[1:])))
+                                com.send_message(client, com.write_message(com.tag_yet_to_start,
+                                                                           "Spiel noch nicht gestartet."))
+                                client.close()
+                        if len(inpt) == players + 1:
+                            send_players(inpt, com.write_message(com.tag_start, com.encode_list(names[1:])))
+                            for i, s in enumerate(inpt[1:]):
+                                com.send_message(s, com.write_message(com.tag_index, str(i+1)))
+                            if cards_given:
+                                for card in players_piles[-1]:
+                                    com.send_message(inpt[-1], com.write_message(com.tag_take_cards, card))
+                            else:
+                                for index, pile in enumerate(players_piles):
+                                    for card in pile:
+                                        com.send_message(inpt[index + 1], com.write_message(com.tag_take_cards, card))
+                                cards_given = True
                 else:
                     buf, s = com.receive_message([s])
                     if not buf:
