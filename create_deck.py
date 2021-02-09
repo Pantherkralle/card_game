@@ -292,9 +292,8 @@ class Results():
             index = int(num_specs.var.get())
             self.values.extend(multiply_text(vals_specs.left_list[: index], vals_specs.right_list[: index]))
         root.destroy()
-        print(self.values)
         self.players = players_num.var.get()
-        self.piles_size = piles_size.var.get()
+        self.piles_size = min(piles_size.var.get(), len(self.values) // self.players)
 
     def __call__(self):
         return self.values, self.players, self.piles_size

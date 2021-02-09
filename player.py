@@ -108,7 +108,6 @@ import sys
 import com
 
 pers_ind = None
-name = None
 draw_pile = True
 
 index_big_card = -1
@@ -138,7 +137,7 @@ def process_sockets(sockets):
             global pers_ind
             pers_ind = int(value)
         elif tag == com.tag_start:
-                GUI.par.name(com.decode_list(value))
+                GUI.par.name(personalize(com.decode_list(value), pers_ind))
                 print(GUI.par.names)
                 GUI.par.other_players = len(GUI.par.names) - 1
                 GUI.par.set(GUI.par.other_players, 250 // GUI.par.other_players)
@@ -169,6 +168,8 @@ if menu.role_res:
 
     server = connect(menu.ip_res, menu.port_res, menu.name_res, players)
 
+    def personalize(listed, per_ind):
+        return listed
 
     def give_cards():
         i = 1
@@ -179,175 +180,100 @@ if menu.role_res:
         for k in draw_pile_cards:
             com.send_message(server, com.write_message(com.tag_draw_pile, k))
 
-
     give_cards()
 
-if menu.role_res:
-    pygame.init()  # initialize pygame
-    fps = 30
-    clock = pygame.time.Clock()
-    pygame.mouse.set_visible(1)
-
-    while True:
-        process_sockets([server])
-
-        GUI.display(draw_pile)
-
-        x, y = pygame.mouse.get_pos()
-
-        # blit hand if there are any cards to blit
-        if len(GUI.hand) > 0:
-
-            GUI.hand_rectangles, GUI.hand_objects = GUI.show_hand(GUI.hand, x, y, index_big_card)
-
-            # Calculate area of displayed hand depending on actual number of cards
-            hand_w = distance * (len(GUI.hand) - 1) + GUI.par.empty_card_w
-            hand_area = pygame.Rect((GUI.par.screen_w - hand_w) // 2, card_pos_y, hand_w, GUI.par.empty_card_h)
-
-            # examine which card is selected by the cursors' position
-            if hand_area.collidepoint(x, y) and not GUI.drag_card:
-                for ind, Rectangle in enumerate(GUI.hand_rectangles):
-                    if Rectangle.collidepoint(x, y):
-                        index_big_card = ind
-                        break
-                    else:
-                        index_big_card = -1  # Dürfte keinen Effekt haben
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                server.close()
-                sys.exit()
-            elif event.type == MOUSEBUTTONDOWN:
-                if GUI.draw_pile.rect is not None and GUI.draw_pile.touching(x, y):
-                    GUI.draw_pile.active = True
-                elif GUI.open_discard_pile.touching(x, y):
-                    GUI.open_discard_pile.active = True
-                elif GUI.covered_discard_pile.touching(x, y):
-                    GUI.covered_discard_pile.active = True
-                if len(GUI.hand) > 0:
-                    if hand_area.collidepoint(x, y):
-                        GUI.drag_card = True
-            elif event.type == MOUSEBUTTONUP:
-                if GUI.open_discard_pile.active:
-                    if GUI.drag_card:
-                        GUI.open_discard_pile.value = GUI.hand[index_big_card]
-                        com.send_message(server,
-                                         com.write_message(com.tag_open_dis, GUI.open_discard_pile.value, pers_ind))
-                        GUI.open_discard_pile.active = GUI.discard(index_big_card)
-                    else:
-                        com.send_message(server, com.write_message(com.tag_shuffle, "open"))
-                elif GUI.covered_discard_pile.active:
-                    if GUI.drag_card:
-                        com.send_message(server, com.write_message(com.tag_cov_dis, GUI.hand[index_big_card], pers_ind))
-                        GUI.covered_discard_pile.active = GUI.discard(index_big_card)
-                    else:
-                        com.send_message(server, com.write_message(com.tag_shuffle, "cov"))
-                elif GUI.draw_pile.active:
-                    com.send_message(server, com.write_message(com.tag_draw, "draw", 1))
-                    GUI.draw_pile.active = False
-                GUI.drag_card = False
-        if GUI.drag_card and GUI.open_discard_pile.touch:
-            GUI.open_discard_pile.active = True
-            GUI.covered_discard_pile.active = False
-            GUI.show_comment("Karte offen ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.x), GUI.par.card_w)
-        elif GUI.drag_card and GUI.covered_discard_pile.touch:
-            GUI.covered_discard_pile.active = True
-            GUI.open_discard_pile.active = False
-            GUI.show_comment("Karte verdeckt ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.y),
-                             GUI.par.card_w)
-        elif GUI.draw_pile.active and GUI.draw_pile.touching(x, y) and draw_pile:
-            GUI.show_comment("Karte ziehen", (GUI.draw_pile.x, GUI.draw_pile.y), GUI.par.card_w)
-        elif GUI.drag_card or not (GUI.open_discard_pile.active or GUI.covered_discard_pile.active):
-            GUI.open_discard_pile.active = False
-            GUI.covered_discard_pile.active = False
-            GUI.draw_pile.active = False
-
-        clock.tick(fps)
-        pygame.display.update()
 else:
-
-    pygame.init()  # initialize pygame
-
-
+    server = connect(menu.ip_res, menu.port_res, menu.name_res, menu.role_res)
 
     def personalize(listed, per_ind):
-        pers_list = listed[pers_ind - 1:]
+        print(listed)
+        print(per_ind)
+        pers_list = listed[per_ind - 1:]
         for element in listed[:per_ind - 1]:
             pers_list.append(element)
         return pers_list
 
 
-    pile_size = 3
+pygame.init()  # initialize pygame
+fps = 30
+clock = pygame.time.Clock()
+pygame.mouse.set_visible(1)
 
-    pygame.mouse.set_visible(1)
+while True:
+    process_sockets([server])
 
-    sock = connect(menu.ip_res, menu.port_res, menu.name_res, menu.role_res)
+    GUI.display(draw_pile)
 
-    while True:
-        process_sockets([sock])
-        GUI.display(draw_pile)
+    x, y = pygame.mouse.get_pos()
 
-        x, y = pygame.mouse.get_pos()
+    # blit hand if there are any cards to blit
+    if len(GUI.hand) > 0:
 
-        # blit hand if there are any cards to blit
-        if len(GUI.hand) > 0:
+        GUI.hand_rectangles, GUI.hand_objects = GUI.show_hand(GUI.hand, x, y, index_big_card)
+        print(GUI.par.names, pers_ind)
+        GUI.show_comment(GUI.par.names[0], (100, GUI.par.screen_h - 50), GUI.par.card_w)
 
-            GUI.hand_rectangles, GUI.hand_objects = GUI.show_hand(GUI.hand, x, y, index_big_card)
+        # Calculate area of displayed hand depending on actual number of cards
+        hand_w = distance * (len(GUI.hand) - 1) + GUI.par.empty_card_w
+        hand_area = pygame.Rect((GUI.par.screen_w - hand_w) // 2, card_pos_y, hand_w, GUI.par.empty_card_h)
 
-            # Calculate area of displayed hand depending on actual number of cards
-            hand_w = distance * (len(GUI.hand) - 1) + GUI.par.empty_card_w
-            hand_area = pygame.Rect((GUI.par.screen_w - hand_w) // 2, card_pos_y, hand_w, GUI.par.empty_card_h)
+        # examine which card is selected by the cursors' position
+        if hand_area.collidepoint(x, y) and not GUI.drag_card:
+            for ind, Rectangle in enumerate(GUI.hand_rectangles):
+                if Rectangle.collidepoint(x, y):
+                    index_big_card = ind
+                    break
+                else:
+                    index_big_card = -1  # Dürfte keinen Effekt haben
 
-            # examine which card is selected by the cursors' position
-            if hand_area.collidepoint(x, y) and not GUI.drag_card:
-                for ind, Rectangle in enumerate(GUI.hand_rectangles):
-                    if Rectangle.collidepoint(x, y):
-                        index_big_card = ind
-                        break
-                    else:
-                        index_big_card = -1  # Dürfte keinen Effekt haben
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sock.close()
-                sys.exit()
-            elif event.type == MOUSEBUTTONDOWN:
-                if GUI.draw_pile.rect is not None and GUI.draw_pile.touching(x, y):
-                    GUI.draw_pile.active = True
-                if len(GUI.hand) > 0:
-                    if hand_area.collidepoint(x, y):
-                        GUI.drag_card = True
-            elif event.type == MOUSEBUTTONUP:
-                # if index_big_card <= len(hand):
-                #     index_big_card = -1
-                if GUI.open_discard_pile.active:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            server.close()
+            sys.exit()
+        elif event.type == MOUSEBUTTONDOWN:
+            if GUI.draw_pile.rect is not None and GUI.draw_pile.touching(x, y):
+                GUI.draw_pile.active = True
+            elif GUI.open_discard_pile.touching(x, y):
+                GUI.open_discard_pile.active = True
+            elif GUI.covered_discard_pile.touching(x, y):
+                GUI.covered_discard_pile.active = True
+            if len(GUI.hand) > 0:
+                if hand_area.collidepoint(x, y):
+                    GUI.drag_card = True
+        elif event.type == MOUSEBUTTONUP:
+            if GUI.open_discard_pile.active:
+                if GUI.drag_card:
                     GUI.open_discard_pile.value = GUI.hand[index_big_card]
-                    com.send_message(sock, com.write_message(com.tag_open_dis, GUI.open_discard_pile.value, pers_ind))
+                    com.send_message(server,
+                                     com.write_message(com.tag_open_dis, GUI.open_discard_pile.value, pers_ind))
                     GUI.open_discard_pile.active = GUI.discard(index_big_card)
-                elif GUI.covered_discard_pile.active:
-                    com.send_message(sock, com.write_message(com.tag_cov_dis, GUI.hand[index_big_card], pers_ind))
+                else:
+                    com.send_message(server, com.write_message(com.tag_shuffle, "open"))
+            elif GUI.covered_discard_pile.active:
+                if GUI.drag_card:
+                    com.send_message(server, com.write_message(com.tag_cov_dis, GUI.hand[index_big_card], pers_ind))
                     GUI.covered_discard_pile.active = GUI.discard(index_big_card)
-                elif GUI.draw_pile.active:
-                    com.send_message(sock, com.write_message(com.tag_draw, "draw", pers_ind))
-                    # print("main loop: draw: pers_ind =", pers_ind)
-                    GUI.draw_pile.active = False
-                GUI.drag_card = False
-        if GUI.drag_card and GUI.open_discard_pile.touch:
-            GUI.open_discard_pile.active = True
-            GUI.covered_discard_pile.active = False
-            GUI.show_comment("Karte offen ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.x), GUI.par.card_w)
-        elif GUI.drag_card and GUI.covered_discard_pile.touch:
-            GUI.covered_discard_pile.active = True
-            GUI.open_discard_pile.active = False
-            GUI.show_comment("Karte verdeckt ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.y),
-                             GUI.par.card_w)
-        elif GUI.draw_pile.active and GUI.draw_pile.touching(x, y) and draw_pile:
-            GUI.show_comment("Karte ziehen", (GUI.draw_pile.x, GUI.draw_pile.y), GUI.par.card_w)
-        else:
-            GUI.open_discard_pile.active = False
-            GUI.covered_discard_pile.active = False
-            GUI.draw_pile.active = False
+                else:
+                    com.send_message(server, com.write_message(com.tag_shuffle, "cov"))
+            elif GUI.draw_pile.active:
+                com.send_message(server, com.write_message(com.tag_draw, "draw", pers_ind))
+                GUI.draw_pile.active = False
+            GUI.drag_card = False
+    if GUI.drag_card and GUI.open_discard_pile.touch:
+        GUI.open_discard_pile.active = True
+        GUI.covered_discard_pile.active = False
+        GUI.show_comment("Karte offen ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.x), GUI.par.card_w)
+    elif GUI.drag_card and GUI.covered_discard_pile.touch:
+        GUI.covered_discard_pile.active = True
+        GUI.open_discard_pile.active = False
+        GUI.show_comment("Karte verdeckt ablegen", (GUI.open_discard_pile.x, GUI.open_discard_pile.y),
+                         GUI.par.card_w)
+    elif GUI.draw_pile.active and GUI.draw_pile.touching(x, y) and draw_pile:
+        GUI.show_comment("Karte ziehen", (GUI.draw_pile.x, GUI.draw_pile.y), GUI.par.card_w)
+    elif GUI.drag_card or not (GUI.open_discard_pile.active or GUI.covered_discard_pile.active):
+        GUI.open_discard_pile.active = False
+        GUI.covered_discard_pile.active = False
+        GUI.draw_pile.active = False
 
-        # if not naming.wait_input:
-        #    clock.tick(fps)
-        pygame.display.update()
+    clock.tick(fps)
+    pygame.display.update()

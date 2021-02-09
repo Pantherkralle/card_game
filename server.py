@@ -5,6 +5,8 @@ import random
 import com
 import os
 
+# ToDO: Who just shuffled can't draw cards
+
 message_present = "{} von {} Spieler*innen anwesend."
 message_waiting = "Warte auf Spieler*innen."
 message_start = "Spiel wird gestartet."
@@ -24,6 +26,7 @@ server.listen(5)
 
 inpt = [server]
 names = ["server"]
+disconnected = 0
 
 
 def name_player(val, sock, names):
@@ -114,7 +117,8 @@ def work_sockets(msg, sock):
                     send_players(inpt, com.write_message(com.tag_empty_dp, str(1)))
             elif value == "cov":
                 if len(cov_dis) > 0:
-                    draw_pile += random.shuffle(cov_dis)
+                    random.shuffle(cov_dis)
+                    draw_pile.append(cov_dis)
                     cov_dis = []
                     send_players(inpt, com.write_message(com.tag_empty_dp, str(1)))
         elif tag == com.tag_draw:
@@ -143,8 +147,10 @@ def end_game():
 
 def close_connection(sock):
     index = inpt.index(sock)
+    # Make potential newly arrived client the last one
     players_piles.append(players_piles[index-1])
     players_piles.pop(index-1)
+
     inpt.pop(index)
     sock.close()
     send_players(inpt, com.write_message(com.tag_socket_closed, names[index]))
@@ -152,7 +158,6 @@ def close_connection(sock):
         send_players(inpt, com.write_message(com.tag_end, "Dealer left"))
         end_game()
     names.pop(index)
-    names.append("player " + str(len(names)))
 
 
 while 1:
@@ -182,12 +187,14 @@ while 1:
                                                                            "Spiel noch nicht gestartet."))
                                 client.close()
                         if len(inpt) == players + 1:
-                            send_players(inpt, com.write_message(com.tag_start, com.encode_list(names[1:])))
                             for i, s in enumerate(inpt[1:]):
-                                com.send_message(s, com.write_message(com.tag_index, str(i+1)))
+                                com.send_message(s, com.write_message(com.tag_index, str(i + 1)))
+                            send_players(inpt, com.write_message(com.tag_start, com.encode_list(names[1:])))
                             if cards_given:
-                                for card in players_piles[-1]:
-                                    com.send_message(inpt[-1], com.write_message(com.tag_take_cards, card))
+                                for pile in players_piles[-disconnected:]:
+                                    for card in pile:
+                                        com.send_message(inpt[-disconnected], com.write_message(com.tag_take_cards, card))
+                                    disconnected -= 1
                             else:
                                 for index, pile in enumerate(players_piles):
                                     for card in pile:
@@ -196,6 +203,7 @@ while 1:
                 else:
                     buf, s = com.receive_message([s])
                     if not buf:
+                        disconnected += 1
                         close_connection(s)
         if buf and buf != 2:
             msg = work_sockets(buf, s)
@@ -204,6 +212,5 @@ while 1:
             try:
                 com.send_message(sock, com.write_message(com.tag_check_connection, "Checking connection"))
             except ConnectionError:
+                disconnected += 1
                 close_connection(sock)
-    if len(names) != len(inpt):
-        print("-.-")
