@@ -2,15 +2,15 @@ import tkinter as tk
 
 
 # ToDo: Spielmechanik: dealer kann keine Karten ziehen,
-    # Stapel aufteilen / auf die Hand nehmen, idealerweise frei auf dem Tisch verschieben (für Stiche nehmen etc.),
-    # dann auch Möglichkeit, Stapel anzusehen (oder generell bei offenem Stapel)
-    # Information über Handlungen der Mitspielenden (Chatfenster am Rand o.ä. / PopUp-Meldungen)
-    # rein GUI: Problem schwarzer Streifen, 'Kreuz' komisch verschoben, Anzahl Karten Spieler auf Stapelrückseite anzeigen
-    # kann Spielmenü nicht mit Enter bestätigen
-    # ! Was, wenn zu viele Karten gegeben werden sollen?
-    # ! IP-Adressen frei eingeben -> Textfeld
-    # ! Name
-    # ! Doku / Benutzerhandbuch: Motivation / was kann es, technisch: Netzwerknachrichten beschreiben
+# Stapel aufteilen / auf die Hand nehmen, idealerweise frei auf dem Tisch verschieben (für Stiche nehmen etc.),
+# dann auch Möglichkeit, Stapel anzusehen (oder generell bei offenem Stapel)
+# Information über Handlungen der Mitspielenden (Chatfenster am Rand o.ä. / PopUp-Meldungen)
+# rein GUI: Problem schwarzer Streifen, 'Kreuz' komisch verschoben, Anzahl Karten Spieler auf Stapelrückseite anzeigen
+# kann Spielmenü nicht mit Enter bestätigen
+# ! Was, wenn zu viele Karten gegeben werden sollen?
+# ! IP-Adressen frei eingeben -> Textfeld
+# ! Name
+# ! Doku / Benutzerhandbuch: Motivation / was kann es, technisch: Netzwerknachrichten beschreiben
 
 
 class StartMenu:
@@ -150,8 +150,6 @@ def process_sockets(sockets):
             clock.tick(1 / 5)
             pygame.quit()
             quit()
-        elif tag in com.tags_to_all:
-            GUI.show_comment(value, GUI.par.center, 200)
         elif tag == com.tag_take_cards:
             GUI.hand.append(value)
         else:

@@ -3,21 +3,14 @@ import select
 import socket
 
 # tags
-tag_error = 0
-tag_error_tag = 1
-tag_socket_closed = 2
-tag_no_msg = 3
-tag_yet_to_start = 4
-tag_check_connection = 5
-tag_accepted = 6
-tag_socket_connected = 7
-tag_usernames = 10
-tag_prior_user = 11
-tag_index = 12
-tag_notification = 20
+tag_no_msg = 0
+tag_socket_closed = 1
+tag_yet_to_start = 2
+tag_socket_connected = 3
+tag_check_connection = 4
+tag_index = 10
 tag_start = 21
 tag_end = 22
-tag_cards_given = 23
 tag_give_cards = 30
 tag_draw_pile = 31
 tag_take_cards = 32
@@ -26,9 +19,6 @@ tag_draw = 34
 tag_open_dis = 35
 tag_cov_dis = 36
 tag_shuffle = 37
-tag_players = 40
-tag_piles_size = 41
-tags_to_all = [tag_notification, tag_start]
 tags_specific_player = [tag_give_cards, tag_draw, tag_open_dis, tag_cov_dis, tag_socket_connected]
 
 timeout = 0.01
@@ -81,7 +71,6 @@ def receiving(sockets, to=timeout):
     if msg == 2:
         return tag_no_msg, None, None, None, sock
     if not msg:
-        print("Where are you?")
         sock.close()
         return tag_socket_closed, None, None, None, sock
     tag, value, msg, player = read_message(msg)

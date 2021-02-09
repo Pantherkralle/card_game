@@ -81,24 +81,11 @@ def work_sockets(msg, sock):
         elif tag == com.tag_socket_closed:
             print("Verbindung zu client verloren.")
             close_connection(sock)
-        if tag == com.tag_players:
-            global players
-            global names
-            players = int(value)
-            num = 2
-            while len(names) < players + 1:
-                names.append("player " + str(num))
-                num += 1
-            players_piles = [None] * players
-        elif tag == com.tag_piles_size:
-            piles_size = int(value)
         elif tag == com.tag_give_cards:
             if players_piles[player-1] is None:
                 players_piles[player-1] = [value]
             else:
                 players_piles[player-1].append(value)
-        elif tag == com.tag_cards_given:
-            cards_given = True
         elif tag == com.tag_draw_pile:
             draw_pile.append(value)
         elif tag == com.tag_open_dis:
